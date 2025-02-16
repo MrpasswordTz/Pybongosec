@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyBongosec - Online Python Interpreter</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="PyBongosec is an online Python interpreter that allows you to write, run, and debug Python code directly in your browser. Perfect for learning Python and testing code snippets.">
+    <meta name="keywords" content="Python, online Python interpreter, Python code editor, run Python online, Python IDE, Python programming, Python syntax highlighting, Python auto-indentation, Python code execution">
+    <meta name="author" content="MrpasswordTz">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="PyBongosec - Online Python Interpreter">
+    <meta property="og:description" content="Write, run, and debug Python code online with PyBongosec. A powerful and user-friendly online Python interpreter.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com">
+    <meta property="og:image" content="https://yourwebsite.com/logo.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PyBongosec - Online Python Interpreter">
+    <meta name="twitter:description" content="Write, run, and debug Python code online with PyBongosec. A powerful and user-friendly online Python interpreter.">
+    <meta name="twitter:image" content="https://yourwebsite.com/logo.png">
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/theme/monokai.min.css">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-4">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-400">PyBongosec</h1>
+        <div class="flex flex-col items-center">
+            <!-- Code Editor -->
+            <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-lg">
+                <div id="editor" class="bg-gray-700 p-4 rounded"></div>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="run" class="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300">Run</button>
+                    <button id="clear" class="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300">Clear</button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="w-full max-w-4xl mt-6">
+                <h2 class="text-xl font-bold mb-2 text-blue-400">Output</h2>
+                <div id="output" class="bg-gray-800 p-4 rounded-lg shadow-lg font-mono min-h-[100px]"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-gray-400">
+            <div class="flex justify-center space-x-4">
+                <a href="https://wa.me/yourwhatsapplink" target="_blank" class="hover:text-green-500 transition duration-300">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="https://github.com/yourgithub" target="_blank" class="hover:text-purple-500 transition duration-300">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+            <p class="mt-2">Developed by <span class="text-blue-400">MrpasswordTz</span></p>
+            <p class="mt-2">© <span id="currentYear"></span> PyBongosec. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/python/python.min.js"></script>
+    <script>
+        // Initialize CodeMirror
+        const editor = CodeMirror(document.getElementById("editor"), {
+            lineNumbers: true, // Show line numbers
+            mode: "python", // Syntax highlighting for Python
+            theme: "monokai", // Theme for the editor
+            indentUnit: 4, // Auto-indent with 4 spaces
+            smartIndent: true, // Smart indentation
+            extraKeys: {
+                "Tab": "indentMore", // Tab key for indentation
+                "Shift-Tab": "indentLess", // Shift+Tab for dedentation
+                "Enter": function(cm) {
+                    // Auto-indent on Enter
+                    cm.execCommand("newlineAndIndent");
+                }
+            },
+        });
+
+        // Handle the "Run" button click
+        document.getElementById("run").addEventListener("click", async () => {
+            const code = editor.getValue();
+            const outputDiv = document.getElementById("output");
+
+            // Clear previous output
+            outputDiv.innerText = "Running...";
+
+            try {
+                // Send the code to the backend for execution
+                const response = await fetch("/run", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ code }),
+                });
+
+                const result = await response.json();
+
+                // Display the output or error
+                if (result.output) {
+                    outputDiv.innerText = result.output;
+                    if (result.output.trim() === "") {
+                        outputDiv.innerText = "Code is successfully executed!";
+                    }
+                } else if (result.error) {
+                    outputDiv.innerText = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                outputDiv.innerText = `Error: ${error.message}`;
+            }
+        });
+
+        // Handle the "Clear" button click
+        document.getElementById("clear").addEventListener("click", () => {
+            editor.setValue(""); // Clear the editor
+            document.getElementById("output").innerText = ""; // Clear the output
+        });
+
+        // Theme toggle functionality
+        const toggleButton = document.createElement("button");
+        toggleButton.innerText = "Toggle Theme";
+        toggleButton.className = "mt-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300";
+        document.querySelector(".flex").appendChild(toggleButton);
+
+        toggleButton.addEventListener("click", () => {
+            const currentTheme = document.body.classList.toggle("bg-gray-900");
+            document.body.classList.toggle("bg-gray-800");
+            document.body.classList.toggle("text-white");
+            document.body.classList.toggle("text-gray-200");
+            editor.setOption("theme", currentTheme ? "monokai" : "default");
+        });
+
+        // Set the current year in the footer
+        document.getElementById("currentYear").innerText = new Date().getFullYear();
+    </script>
+</body>
+</html>
